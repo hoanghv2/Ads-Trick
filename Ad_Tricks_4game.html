@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Trick show ads 4 game</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+*{box-sizing:border-box}body{margin:0}
+/* Layout: báo cáo dọc, mỗi trick = 1 khối gồm mô tả + storyboard điện thoại chạy tuần tự (cuộn ngang khi hẹp) */
+:root{
+  --bg:#f2f3f6; --surface:#ffffff; --ink:#161a23; --muted:#596173; --line:#dde0e8;
+  --accent:#3346c4; --hot:#d4412c; --ok:#1d8656; --warn:#b67a06;
+  --ad:#f4c84a; --adink:#3a2c00; --adbg:#fffaf0; --game:#9ad7cb; --game2:#7cc7b8; --frame:#22252e;
+  --hatch:rgba(212,65,44,.14);
+  --f-display:"Be Vietnam Pro",system-ui,sans-serif; --f-body:"Be Vietnam Pro",system-ui,sans-serif; --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111319; --surface:#1a1d26; --ink:#e8eaf1; --muted:#9ba2b3; --line:#2b2f3b;
+  --accent:#8e9bff; --hot:#ff6a54; --ok:#4cc38a; --warn:#e3a93a;
+  --ad:#e0b43a; --adink:#2a2000; --adbg:#2a2618; --game:#2d6c63; --game2:#255a52; --frame:#050608;
+  --hatch:rgba(255,106,84,.18); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111319; --surface:#1a1d26; --ink:#e8eaf1; --muted:#9ba2b3; --line:#2b2f3b;
+  --accent:#8e9bff; --hot:#ff6a54; --ok:#4cc38a; --warn:#e3a93a;
+  --ad:#e0b43a; --adink:#2a2000; --adbg:#2a2618; --game:#2d6c63; --game2:#255a52; --frame:#050608;
+  --hatch:rgba(255,106,84,.18); color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6}
+.wrap{max-width:1080px;margin:0 auto;padding-block:40px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:40px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.2}
+h1{font-size:clamp(28px,4.4vw,42px);font-weight:800;letter-spacing:-.02em}
+h2{font-size:24px;font-weight:800;letter-spacing:-.01em}
+h3{font-size:15px;font-weight:600}
+p{margin:0;max-width:68ch}
+code,.mono{font-family:var(--f-mono);font-size:12.5px}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+header{display:flex;flex-direction:column;gap:12px}
+.lede{color:var(--muted);font-size:16px}
+.meta{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;border:1px solid var(--line);background:var(--surface);white-space:nowrap}
+.chip.hot{color:var(--hot);border-color:color-mix(in srgb,var(--hot) 45%,var(--line))}
+.chip.warn{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 45%,var(--line))}
+.chip.ok{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 45%,var(--line))}
+.chip.off{color:var(--muted);border-style:dashed}
+.g{font-weight:600}
+/* matrix */
+.tablebox{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;min-width:700px;font-size:13.5px}
+th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.03em}
+tr:last-child td{border-bottom:0}
+td.c{text-align:center;font-variant-numeric:tabular-nums}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--hot)}
+.dot.w{background:var(--warn)} .dot.o{background:transparent;border:2px dashed var(--muted);width:8px;height:8px} .dot.n{background:var(--line)}
+.legend{display:flex;flex-wrap:wrap;gap:16px;font-size:12.5px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+/* trick block */
+.trick{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:18px}
+.thead{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 14px}
+.tnum{font-family:var(--f-mono);font-size:13px;color:var(--muted)}
+.cols{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:24px}
+@media (max-width:820px){.cols{grid-template-columns:minmax(0,1fr)}}
+.cols>div{min-width:0;display:flex;flex-direction:column;gap:10px}
+ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+li{max-width:68ch}
+.ev{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;overflow-x:auto;white-space:pre;line-height:1.55}
+.verdict{font-size:13.5px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg)}
+.verdict b{font-weight:600}
+/* storyboard */
+.board{display:flex;gap:18px;overflow-x:auto;padding:6px 4px 10px;scroll-snap-type:x proximity}
+.step{flex:none;width:166px;display:flex;flex-direction:column;gap:8px;scroll-snap-align:start}
+.cap{font-size:12.5px;line-height:1.45;color:var(--muted)}
+.cap b{color:var(--ink);font-weight:600;display:block;font-size:12px;letter-spacing:.04em}
+.arrowstep{flex:none;align-self:center;color:var(--muted);font-size:20px;margin-top:-60px}
+.ph{position:relative;width:150px;height:284px;border-radius:22px;background:var(--frame);outline:3px solid transparent;outline-offset:3px}
+.board.n4 .ph{animation:hl4 8s infinite;animation-delay:calc(var(--i)*2s)}
+.board.n3 .ph{animation:hl3 6s infinite;animation-delay:calc(var(--i)*2s)}
+@keyframes hl4{0%,24%{outline-color:var(--accent)}25%,100%{outline-color:transparent}}
+@keyframes hl3{0%,32%{outline-color:var(--accent)}33%,100%{outline-color:transparent}}
+.sc{position:absolute;inset:7px;border-radius:16px;overflow:hidden;background:var(--game);
+  background-image:linear-gradient(var(--game2) 2px,transparent 2px),linear-gradient(90deg,var(--game2) 2px,transparent 2px);background-size:28px 28px;background-position:8px 30px;font-size:9.5px;color:var(--ink)}
+.sc.home{background:linear-gradient(160deg,#5b6bd6,#2c3270);background-image:linear-gradient(160deg,#5b6bd6,#2c3270)}
+.statusbar{position:absolute;top:0;left:0;right:0;height:14px;background:rgba(0,0,0,.18)}
+.hud{position:absolute;top:18px;left:8px;right:8px;display:flex;justify-content:space-between;font-weight:700;font-size:9px;color:#0f2e29}
+.tile{position:absolute;width:24px;height:24px;border-radius:6px;background:#fff;box-shadow:0 2px 0 rgba(0,0,0,.18)}
+.bn{position:absolute;left:0;right:0;bottom:0;height:24px;background:var(--ad);color:var(--adink);font-weight:700;font-size:9px;display:flex;align-items:center;justify-content:center;gap:6px}
+.bn i{font-style:normal;border:1px solid var(--adink);border-radius:3px;padding:0 3px;font-size:8px}
+.tabbar{position:absolute;left:0;right:0;bottom:0;height:28px;background:rgba(255,255,255,.85);display:flex;justify-content:space-around;align-items:center;font-size:8.5px;color:#222;font-weight:600}
+.ad{position:absolute;inset:0;background:var(--adbg);display:flex;flex-direction:column;padding:22px 10px 12px;gap:7px;color:var(--ink)}
+.ad .img{flex:1;border-radius:8px;background:linear-gradient(135deg,var(--ad),color-mix(in srgb,var(--ad) 40%,var(--hot)))}
+.ad .ln{height:6px;border-radius:3px;background:var(--line)} .ad .ln.s{width:60%}
+.ad .cta{height:26px;border-radius:7px;background:var(--ok);color:#fff;font-weight:700;font-size:10px;display:flex;align-items:center;justify-content:center}
+.adtag{position:absolute;top:6px;left:8px;font-size:8px;font-weight:700;background:var(--ad);color:var(--adink);border-radius:3px;padding:0 4px}
+.inter .img{background:linear-gradient(135deg,#6d7cf0,#c06be0)}
+.x{position:absolute;top:5px;right:6px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;z-index:3}
+.x.l{right:auto;left:6px}
+.x.dim{opacity:.22}
+.x.none{background:transparent;border:1.5px dashed var(--hot);color:var(--hot)}
+.ring{background:conic-gradient(var(--hot) 0 65%,rgba(0,0,0,.25) 0);color:#fff}
+.tap{position:absolute;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;border:2.5px solid var(--hot);background:color-mix(in srgb,var(--hot) 25%,transparent);z-index:6}
+.tap::after{content:"";position:absolute;inset:-3px;border-radius:50%;border:2px solid var(--hot);animation:rip 1.4s ease-out infinite}
+@keyframes rip{0%{transform:scale(.6);opacity:1}100%{transform:scale(2.2);opacity:0}}
+.tap.fake{border-style:dashed;background:transparent}
+.ghost{position:absolute;border:2px dashed var(--hot);background:repeating-linear-gradient(45deg,var(--hatch) 0 6px,transparent 6px 12px);z-index:4;display:flex;align-items:flex-start;justify-content:center}
+.ghost span{margin-top:4px;background:var(--hot);color:#fff;font-size:8px;font-weight:700;padding:1px 5px;border-radius:3px;text-align:center;line-height:1.3}
+.lbl{position:absolute;left:6px;right:6px;z-index:7;background:var(--ink);color:var(--surface);font-size:8.5px;font-weight:600;border-radius:5px;padding:3px 5px;text-align:center;line-height:1.35}
+.store{position:absolute;inset:0;background:#fff;color:#222;display:flex;flex-direction:column;padding:22px 10px;gap:8px}
+.store .hdr{font-weight:800;font-size:11px;color:#0b7a3b}
+.store .ic{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,var(--ad),var(--hot))}
+.store .btn{height:24px;border-radius:6px;background:#0b7a3b;color:#fff;font-weight:700;font-size:10px;display:flex;align-items:center;justify-content:center}
+.pop{position:absolute;left:12px;right:12px;top:52px;background:var(--surface);border-radius:12px;padding:10px;box-shadow:0 6px 20px rgba(0,0,0,.25);display:flex;flex-direction:column;gap:6px;font-size:9.5px;color:var(--ink);text-align:center;font-weight:600}
+.pop .nat{height:46px;border-radius:6px;background:var(--adbg);border:1.5px solid var(--ad);display:flex;align-items:center;justify-content:center;font-size:8.5px;color:var(--adink);font-weight:700}
+.dimbg{position:absolute;inset:0;background:rgba(0,0,0,.45)}
+.big{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--f-display);font-weight:800;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.5);gap:4px;z-index:5}
+.big .n{font-size:44px;line-height:1}
+.big .t{font-size:10px;font-weight:600}
+.under{position:absolute;inset:0;transform:translate(7px,7px);opacity:.9}
+.stackwrap{position:absolute;inset:0}
+.navhidden{position:absolute;left:0;right:0;bottom:0;height:12px;background:repeating-linear-gradient(90deg,var(--hot) 0 4px,transparent 4px 8px);opacity:.6}
+.launcher{position:absolute;inset:0;display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:40px 16px;align-content:start}
+.launcher div{aspect-ratio:1;border-radius:10px;background:rgba(255,255,255,.35)}
+.launcher div.me{background:var(--ad);outline:2px solid #fff}
+.tread{position:absolute;left:28px;right:28px;top:120px;height:40px;border-radius:8px;background:#444;background-image:repeating-linear-gradient(90deg,#555 0 8px,#3a3a3a 8px 16px)}
+.hero{position:absolute;left:62px;top:96px;width:26px;height:34px;border-radius:10px 10px 6px 6px;background:var(--hot)}
+/* flow (segment) */
+.flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;align-items:stretch}
+.node{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--bg);display:flex;flex-direction:column;gap:6px;font-size:13px;min-width:0}
+.node .h{font-weight:600}
+.node.yes{border-color:color-mix(in srgb,var(--hot) 50%,var(--line))}
+.node.no{border-color:color-mix(in srgb,var(--ok) 50%,var(--line))}
+.srcs{display:flex;flex-wrap:wrap;gap:6px}
+.dormant{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.dormant>div{border:1px dashed var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;font-size:13.5px;min-width:0;background:var(--surface)}
+footer{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:8px}
+a{color:var(--accent)}
+@media (prefers-reduced-motion:reduce){.ph,.tap::after{animation:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Ad-ops teardown · 27/10/2026 · Android</div>
+  <h1>Trick show ads của 4 game</h1>
+  <p class="lede">Gộp theo từng trick, không theo game. Mỗi trick có storyboard minh hoạ chạy tuần tự (khung sáng viền là bước đang diễn ra), cơ chế, bằng chứng trong code/RC và đánh giá có nên học không.</p>
+  <div class="meta">
+    <span class="chip">MemeMix Challenge · 0.1.0</span>
+    <span class="chip">Surprise Dumpling ASMR Box · 0.2.0</span>
+    <span class="chip">Tricky Brain · 0.3.9</span>
+    <span class="chip">Steal Escape · 1.25</span>
+  </div>
+  <p class="lede" style="font-size:13.5px">Nguồn: đọc code IL2CPP (arm64) + Java (jadx) và quét Firebase Remote Config từ server. Chưa kiểm chứng trên thiết bị. Nhãn <code>[CODE]</code> = đọc trong code, <code>[RC]</code> = giá trị server đang trả, <code>[HYP]</code> = giả thuyết chưa chứng minh.</p>
+</header>
+
+<section style="display:flex;flex-direction:column;gap:14px">
+  <h2>Ma trận trick × game</h2>
+  <div class="tablebox"><table>
+    <thead><tr><th>Trick</th><th>MemeMix</th><th>Surprise Dumpling</th><th>Tricky Brain</th><th>Steal Escape</th></tr></thead>
+    <tbody>
+      <tr><td><a href="#t1">1. Native giả làm interstitial full màn hình</a></td><td class="c"><span class="dot"></span></td><td class="c"><span class="dot"></span></td><td class="c"><span class="dot n"></span></td><td class="c"><span class="dot o"></span></td></tr>
+      <tr><td><a href="#t2">2. Cả màn hình ad là nút CTA (click cưỡng bức)</a></td><td class="c"><span class="dot o"></span></td><td class="c"><span class="dot"></span></td><td class="c"><span class="dot n"></span></td><td class="c"><span class="dot n"></span></td></tr>
+      <tr><td><a href="#t3">3. Cướp cú chạm của người chơi thành click banner/MREC</a></td><td class="c"><span class="dot n"></span></td><td class="c"><span class="dot n"></span></td><td class="c"><span class="dot"></span></td><td class="c"><span class="dot n"></span></td></tr>
+      <tr><td><a href="#t4">4. Chồng ad: native nằm sẵn dưới inter / 2 ad nối tiếp</a></td><td class="c"><span class="dot"></span></td><td class="c"><span class="dot"></span></td><td class="c"><span class="dot n"></span></td><td class="c"><span class="dot o"></span></td></tr>
+      <tr><td><a href="#t5">5. Nút đóng ẩn, trễ, đổi vị trí; khoá nút Back</a></td><td class="c"><span class="dot"></span></td><td class="c"><span class="dot"></span></td><td class="c"><span class="dot n"></span></td><td class="c"><span class="dot w"></span></td></tr>
+      <tr><td><a href="#t6">6. Inter thay App-Open khi mở/quay lại app, không cooldown</a></td><td class="c"><span class="dot"></span></td><td class="c"><span class="dot"></span></td><td class="c"><span class="dot n"></span></td><td class="c"><span class="dot n"></span></td></tr>
+      <tr><td><a href="#t7">7. Ad bắn khi bấm nút UI bình thường</a></td><td class="c"><span class="dot"></span></td><td class="c"><span class="dot"></span></td><td class="c"><span class="dot n"></span></td><td class="c"><span class="dot w"></span></td></tr>
+      <tr><td><a href="#t8">8. Native + banner cùng màn, native trong cửa sổ đè</a></td><td class="c"><span class="dot n"></span></td><td class="c"><span class="dot n"></span></td><td class="c"><span class="dot n"></span></td><td class="c"><span class="dot w"></span></td></tr>
+      <tr><td><a href="#t9">9. Ad gắn vào vòng lặp gameplay (hợp lệ)</a></td><td class="c"><span class="dot w"></span></td><td class="c"><span class="dot n"></span></td><td class="c"><span class="dot w"></span></td><td class="c"><span class="dot w"></span></td></tr>
+      <tr><td><a href="#seg">Segment user theo mạng (FB/TikTok/Google…)</a></td><td class="c">Không</td><td class="c">Không</td><td class="c"><b>Có</b></td><td class="c">Không</td></tr>
+    </tbody>
+  </table></div>
+  <div class="legend"><span><span class="dot"></span>đang chạy, rủi ro chính sách cao</span><span><span class="dot w"></span>đang chạy, mức nhẹ / hợp lệ</span><span><span class="dot o"></span>có code nhưng đang tắt</span><span><span class="dot n"></span>không có</span></div>
+</section>
+
+<!-- T1 -->
+<section class="trick" id="t1">
+  <div class="thead"><span class="tnum">Trick 1</span><h2>Native giả làm interstitial full màn hình</h2><span class="chip hot">Rủi ro chính sách cao</span></div>
+  <div class="board n4">
+    <div class="step"><div class="ph" style="--i:0"><div class="sc"><div class="statusbar"></div><div class="hud"><span>Đảo 3</span><span>★ 120</span></div><div class="tile" style="left:30px;top:80px"></div><div class="tile" style="left:80px;top:120px"></div><div class="tabbar"><span>Home</span><span>Đảo</span><span>Shop</span></div><div class="tap" style="left:28px;top:262px"></div></div></div><div class="cap"><b>BƯỚC 1</b>Người chơi bấm tab Home (một thao tác chuyển màn thường).</div></div>
+    <div class="step"><div class="ph" style="--i:1"><div class="sc"><div class="ad"><span class="adtag">Ad</span><div class="img"></div><div class="ln"></div><div class="ln s"></div><div class="cta">CÀI ĐẶT</div></div><div class="x none">?</div><div class="lbl" style="top:120px">Native AdMob vẽ full màn hình. 0–3s: không có nút đóng</div></div></div><div class="cap"><b>BƯỚC 2</b>Thay vì interstitial thật, game hiện native full màn hình. Người dùng không phân biệt được.</div></div>
+    <div class="step"><div class="ph" style="--i:2"><div class="sc"><div class="ad"><span class="adtag">Ad</span><div class="img"></div><div class="ln"></div><div class="ln s"></div><div class="cta">CÀI ĐẶT</div></div><div class="x l dim">✕</div><div class="lbl" style="top:120px">3–5s: X hiện mờ 20%, chưa bấm được. Bên trái/phải ngẫu nhiên</div></div></div><div class="cap"><b>BƯỚC 3</b>X xuất hiện mờ ở góc ngẫu nhiên, đến giây 5 mới bấm được.</div></div>
+    <div class="step"><div class="ph" style="--i:3"><div class="sc"><div class="ad inter"><span class="adtag">Ad 2/2</span><div class="img"></div><div class="ln"></div><div class="ln s"></div><div class="cta">CHƠI NGAY</div></div><div class="x none">?</div><div class="lbl" style="top:120px">Bấm X → native thứ 2 hiện ngay, khoá thêm 5s</div></div></div><div class="cap"><b>BƯỚC 4</b>Đóng xong lại ra ad thứ hai. Một lần "inter" = 2 impression.</div></div>
+  </div>
+  <div class="cols">
+    <div>
+      <h3>Cơ chế</h3>
+      <ul>
+        <li><b>Surprise Dumpling:</b> game không có unit interstitial, rewarded hay banner thật. Mọi lời gọi ad (inter, inter khi mở app, rewarded, resume, ad đầu phiên) đều trỏ về một unit native AdMob duy nhất (id 70), render bằng lib Java <code>com.jackie.jnativeads</code> thành màn hình full.</li>
+        <li><b>MemeMix:</b> dùng native full màn hình của AmoAds làm "inter thứ hai" chồng sau inter thật (xem trick 4). Kiểu native đứng một mình thay inter có code nhưng RC đang tắt.</li>
+        <li><b>Steal Escape:</b> có hàm <code>showFullscreenInternal</code> (native trắng full màn, X 34dp đếm ngược 5s) nhưng không có chỗ nào gọi.</li>
+      </ul>
+      <div class="verdict"><b>Có nên học?</b> Không. AdMob yêu cầu native phải phân biệt được với nội dung app và không được trình bày như interstitial bắt buộc xem. eCPM native thường thấp hơn inter, lời chủ yếu đến từ CTR bị thổi (trick 2).</div>
+    </div>
+    <div>
+      <h3>Bằng chứng</h3>
+<div class="ev">[ASSET] RaccoonAdsManager._useAllNative = 1
+[ASSET] AdsScriptableObj: 1 unit OPEN_AD_NATIVE(70)
+        ca-app-pub-8190506959251235/6002144984
+        ca-app-pub-8190506959251235/5810573292
+[CODE]  ShowInter@2f2dcf4 / ShowInterOpen@2f2dbe0 /
+        ShowRewardAds@2f2f66c / HandleForegroundReturn@2f2f620
+        → ShowAd(70)
+[CODE]  RegisterAdUnits@5363398 → JNativeAdsInterstitial
+        (template portrait / landscape)</div>
+    </div>
+  </div>
+</section>
+
+<!-- T2 -->
+<section class="trick" id="t2">
+  <div class="thead"><span class="tnum">Trick 2</span><h2>Cả màn hình ad là nút CTA</h2><span class="chip hot">Rủi ro IVT cao</span></div>
+  <div class="board n3">
+    <div class="step"><div class="ph" style="--i:0"><div class="sc"><div class="ad"><span class="adtag">Ad</span><div class="img"></div><div class="ln"></div><div class="ln s"></div><div class="cta">CÀI ĐẶT</div></div><div class="ghost" style="inset:0"><span>ad_click_overlay<br>match_parent</span></div><div class="x dim">✕</div><div class="tap" style="left:120px;top:24px"></div></div></div><div class="cap"><b>BƯỚC 1</b>Một lớp trong suốt phủ toàn bộ ad. Người dùng định bấm vào chỗ nút X sắp hiện.</div></div>
+    <div class="step"><div class="ph" style="--i:1"><div class="sc"><div class="ad"><span class="adtag">Ad</span><div class="img"></div><div class="ln"></div><div class="ln s"></div><div class="cta" style="outline:3px solid var(--hot)">CÀI ĐẶT</div></div><div class="tap fake" style="left:68px;top:250px"></div><div class="lbl" style="top:120px">overlay.onClick → callToActionView.performClick()</div></div></div><div class="cap"><b>BƯỚC 2</b>Cú chạm bị chuyển thành click vào nút CTA. AdMob ghi nhận click hợp lệ.</div></div>
+    <div class="step"><div class="ph" style="--i:2"><div class="sc"><div class="store"><div class="hdr">Store</div><div class="ic"></div><div class="ln" style="height:6px;background:#ddd;border-radius:3px"></div><div class="btn">Cài đặt</div></div><div class="lbl" style="top:170px">Quay lại app → ad thứ 2 tự hiện (pendingAdvanceOnResume)</div></div></div><div class="cap"><b>BƯỚC 3</b>Store mở. Khi người dùng quay lại, game tự chuyển sang ad kế tiếp sau 250ms.</div></div>
+  </div>
+  <div class="cols">
+    <div>
+      <h3>Cơ chế</h3>
+      <ul>
+        <li><b>Surprise Dumpling:</b> layout native <code>native_portrait.xml</code> / <code>native_landscape*.xml</code> có view <code>ad_click_overlay</code> kích thước <code>match_parent</code>, clickable. <code>Layout.render</code> gán onClick của nó gọi <code>callToActionView.performClick()</code>. Chạm vào bất kỳ đâu, kể cả bấm hụt nút X, đều thành click.</li>
+        <li><b>MemeMix (đang tắt):</b> AmoAds có <code>fakeCloseClick</code>: bấm X thì gọi <code>callOnClick()</code> lên CTA rồi mới đóng, và một lớp "bấm đâu cũng là click". Lớp này bị hard-code false; fakeClose chỉ đi qua hàm collapse không ai gọi.</li>
+      </ul>
+      <div class="verdict"><b>Có nên học?</b> Không. Đây là dạng click không chủ ý điển hình mà AdMob và các mạng phát hiện được qua tỉ lệ click/return nhanh; hậu quả có thể là trừ doanh thu hoặc khoá tài khoản.</div>
+    </div>
+    <div>
+      <h3>Bằng chứng</h3>
+<div class="ev">[CODE] com.jackie.jnativeads.Layout.render
+       ad_click_overlay.setOnClickListener →
+       callToActionView.performClick()   (cũng có trong LayoutFan)
+[CODE] UnityNativeOverlay.onAdClicked →
+       pendingAdvanceOnResume = true;
+       scheduleClickAdvanceFallback(250ms)
+[CODE] MemeMix NativeAdActionUtils.closeAfterOptionalCta
+       (không có caller) ; canClickFullViewNative = false
+       InitializeAmoAdsIfNeeded@2F5C574  mov w4, wzr</div>
+    </div>
+  </div>
+</section>
+
+<!-- T3 -->
+<section class="trick" id="t3">
+  <div class="thead"><span class="tnum">Trick 3</span><h2>Cướp cú chạm thành click banner/MREC</h2><span class="chip hot">Rủi ro IVT cao</span><span class="chip">Chỉ Tricky Brain</span><span class="chip">Có segment theo nguồn user</span></div>
+  <p style="color:var(--muted);font-size:13.5px">Biến thể A: banner do <b>Meta Audience Network</b> hiển thị.</p>
+  <div class="board n4">
+    <div class="step"><div class="ph" style="--i:0"><div class="sc"><div class="statusbar"></div><div class="hud"><span>Level 12</span><span>💡</span></div><div class="tile" style="left:36px;top:150px"></div><div class="tile" style="left:86px;top:190px"></div><div class="ghost" style="left:0;right:0;bottom:0;top:30%"><span>cửa sổ trong suốt<br>70% dưới màn hình</span></div><div class="bn">Banner <i>Meta AN</i></div></div></div><div class="cap"><b>BƯỚC 1</b>Banner load xong và user thuộc nguồn được boost → game thêm một cửa sổ trong suốt (WindowManager) phủ 70% phía dưới.</div></div>
+    <div class="step"><div class="ph" style="--i:1"><div class="sc"><div class="statusbar"></div><div class="hud"><span>Level 12</span><span>💡</span></div><div class="tile" style="left:36px;top:150px"></div><div class="tile" style="left:86px;top:190px"></div><div class="ghost" style="left:0;right:0;bottom:0;top:30%"><span>nuốt cú chạm</span></div><div class="tap" style="left:48px;top:162px"></div><div class="bn">Banner <i>Meta AN</i></div></div></div><div class="cap"><b>BƯỚC 2</b>Người chơi chạm vào mảnh puzzle. Game không nhận được cú chạm này.</div></div>
+    <div class="step"><div class="ph" style="--i:2"><div class="sc"><div class="statusbar"></div><div class="hud"><span>Level 12</span><span>💡</span></div><div class="tile" style="left:36px;top:150px"></div><div class="tile" style="left:86px;top:190px"></div><div class="bn" style="outline:3px solid var(--hot)">Banner <i>Meta AN</i></div><div class="tap fake" style="left:115px;top:258px"></div><div class="lbl" style="top:200px">Tap giả tại 85% ngang · 50% dọc của banner</div></div></div><div class="cap"><b>BƯỚC 3</b>Java gửi cặp DOWN/UP giả vào banner. Meta ghi nhận click.</div></div>
+    <div class="step"><div class="ph" style="--i:3"><div class="sc"><div class="store"><div class="hdr">Store / landing</div><div class="ic"></div><div class="btn">Mở</div></div><div class="lbl" style="top:160px">Tối đa 2 cú chạm bị cướp, rồi chờ 130s mới bật lại. Quay về không có App-Open để "che"</div></div></div><div class="cap"><b>BƯỚC 4</b>Sau 2 click hoặc khi SDK báo click thật, overlay bị gỡ. Lặp lại sau cooldown.</div></div>
+  </div>
+  <p style="color:var(--muted);font-size:13.5px">Biến thể B: banner do <b>AdMob / Google Ad Manager</b> hiển thị.</p>
+  <div class="board n3">
+    <div class="step"><div class="ph" style="--i:0"><div class="sc"><div class="statusbar"></div><div class="tile" style="left:36px;top:120px"></div><div class="tile" style="left:86px;top:170px"></div><div class="ghost" style="left:19px;right:19px;bottom:0;height:100px"><span>TouchDelegate<br>+30% chiều cao</span></div><div class="bn">Banner <i>AdMob</i></div></div></div><div class="cap"><b>BƯỚC 1</b>Vùng nhận chạm của banner được nới lên trên 30% màn hình (hẹp hơn 2 bên).</div></div>
+    <div class="step"><div class="ph" style="--i:1"><div class="sc"><div class="statusbar"></div><div class="tile" style="left:36px;top:120px"></div><div class="tile" style="left:86px;top:170px"></div><div class="ghost" style="left:19px;right:19px;bottom:0;height:100px"><span>TouchDelegate</span></div><div class="tap" style="left:98px;top:182px"></div><div class="bn">Banner <i>AdMob</i></div></div></div><div class="cap"><b>BƯỚC 2</b>Chạm vào ô puzzle nằm trong vùng nới → sự kiện chạm được chuyển cho banner.</div></div>
+    <div class="step"><div class="ph" style="--i:2"><div class="sc"><div class="store"><div class="hdr">Landing</div><div class="ic"></div><div class="btn">Mở</div></div><div class="lbl" style="top:160px">Cooldown 210s cho banner, 200s cho MREC</div></div></div><div class="cap"><b>BƯỚC 3</b>Click thật về mặt kỹ thuật (người dùng có chạm), nhưng không chủ ý.</div></div>
+  </div>
+  <div class="cols">
+    <div>
+      <h3>Cơ chế</h3>
+      <ul>
+        <li>Unity <code>BoostBanner</code> / <code>BoostMREC</code> gọi lớp Java <code>metax.AdViewUtils</code> / <code>metax.MRecViewUtils</code>, tìm view banner/MREC rồi chọn cách cướp theo mạng đang thắng impression.</li>
+        <li>Mỗi lần cướp xong, Java gọi lại Unity <code>OnClickArea</code> → bắn event <code>ads_click</code> {ad_network, placement=in_game}.</li>
+        <li>Kiểm tra lại mỗi khi banner/MREC load (banner tự refresh 7s, MREC 8s): đủ điều kiện nguồn user, đúng mạng, đã qua cooldown, level ≥ <code>level_start_show</code>.</li>
+        <li>MREC hiện ở gần như mọi popup (Win, Lose, Hint, Rescue, Settings, DailyQuest, StarterPack, loading…), lần nào cũng gắn boost. Overlay cho MREC Meta rộng ~2,4 lần MREC.</li>
+        <li>Mặc định trong APK là tắt (<code>enable=false</code>); server bật.</li>
+      </ul>
+      <div class="verdict"><b>Có nên học?</b> Không. Đây là trick nguy hiểm nhất trong 4 game: chạm giả được sinh bằng code (MotionEvent tổng hợp). Họ cố tình không bật cho user từ Meta, xem <a href="#seg">phần segment</a>.</div>
+    </div>
+    <div>
+      <h3>Bằng chứng</h3>
+<div class="ev">[RC v147] BB = {enable:true, network:"admob,google,facebook",
+  padding:["50,30","50,30","100,70"],
+  cooldown:["210,210","210,210","130,130"],
+  click:2, level_start_show:0,
+  source:"…googleadwords_int,…tiktokglobal_int"}
+[RC v147] BM: padding AdMob/GAM "30,30,30,0", Meta "70,70,70,0"
+          cooldown 200s / 115s
+[CODE] StartBoostBanner@16D7670  cmp w20,#3 (Meta AN)
+       → createOverlayAndForwardTouch (flags 0x228)
+       → forwardTouchToViewLocal (85%, 50%)
+[CODE] AdMob/GAM → expandTouchAreaByClassName (TouchDelegate)
+[CODE] BoostBannerConfigDefault@16DABEC  enable=false</div>
+    </div>
+  </div>
+</section>
+
+<!-- T4 -->
+<section class="trick" id="t4">
+  <div class="thead"><span class="tnum">Trick 4</span><h2>Chồng ad: native nằm sẵn dưới inter</h2><span class="chip hot">Rủi ro chính sách cao</span></div>
+  <div class="board n4">
+    <div class="step"><div class="ph" style="--i:0"><div class="sc"><div class="statusbar"></div><div class="big" style="color:#0f2e29;text-shadow:none"><span class="n">WIN</span><span class="t" style="color:#0f2e29">Hết trận</span></div></div></div><div class="cap"><b>BƯỚC 1</b>Hết trận, game gọi inter.</div></div>
+    <div class="step"><div class="ph" style="--i:1"><div class="sc" style="background:transparent;background-image:none"><div class="stackwrap"><div class="ad under"><span class="adtag">Native</span><div class="img"></div><div class="cta">CÀI ĐẶT</div></div><div class="ad inter" style="box-shadow:0 0 0 2px var(--frame)"><span class="adtag">Inter</span><div class="img"></div><div class="ln"></div><div class="cta" style="background:var(--accent)">PLAY</div></div></div><div class="x">✕</div><div class="lbl" style="top:120px">Inter vừa hiện → native full mở ngay bên dưới</div></div></div><div class="cap"><b>BƯỚC 2</b><code>OnFullscreenDisplayed</code> gọi <code>ShowNativeFullWidthStyle</code>: native đã được mở sau lưng inter.</div></div>
+    <div class="step"><div class="ph" style="--i:2"><div class="sc"><div class="ad"><span class="adtag">Native</span><div class="img"></div><div class="ln"></div><div class="ln s"></div><div class="cta">CÀI ĐẶT</div></div><div class="x none">4</div><div class="navhidden"></div><div class="lbl" style="top:110px">Đóng inter → rơi vào native. Back bị khoá, thanh điều hướng ẩn</div></div></div><div class="cap"><b>BƯỚC 3</b>Người dùng tưởng đã thoát nhưng gặp "inter thứ hai". Đếm ngược 4s chỉ bắt đầu sau khi inter đóng.</div></div>
+    <div class="step"><div class="ph" style="--i:3"><div class="sc"><div class="ad"><span class="adtag">Native</span><div class="img"></div><div class="ln"></div><div class="ln s"></div><div class="cta">CÀI ĐẶT</div></div><div class="x">⨯</div><div class="lbl" style="top:110px">X hiện sau 4s, icon chọn ngẫu nhiên 1/3 kiểu. Đếm ngược dừng khi mất focus</div></div></div><div class="cap"><b>BƯỚC 4</b>Rời app giữa chừng thì đồng hồ dừng, quay lại vẫn phải chờ tiếp.</div></div>
+  </div>
+  <div class="cols">
+    <div>
+      <h3>Cơ chế</h3>
+      <ul>
+        <li><b>MemeMix:</b> trước khi show inter/rewarded, game chuẩn bị một phiên native full (<code>PrepareAmoNativeFullSession</code>, waitForClose=1). Khi inter hiện, native được mở ngay dưới nó; khi inter đóng, đồng hồ đóng native mới chạy. Áp dụng cho inter kết quả trận, Settings, nút về Home và rewarded mở khoá nhân vật.</li>
+        <li><b>Surprise Dumpling:</b> mỗi lần show là chuỗi 2 native liên tiếp (multi-ad, <code>InterClose2</code>), xem bước 4 của trick 1.</li>
+        <li><b>Steal Escape (đang tắt):</b> có code chia đôi màn hình cho 2 native, nhưng slot thứ hai không bao giờ được load.</li>
+      </ul>
+      <div class="verdict"><b>Có nên học?</b> Không. Mỗi lượt xem thành 2 impression. <code>[HYP]</code> Native có thể đã tính impression ngay khi còn bị inter che; cần chạy thử trên máy, xem thời điểm callback impression mới xác nhận được.</div>
+    </div>
+    <div>
+      <h3>Bằng chứng</h3>
+<div class="ev">[CODE] TryShowMaxInterstitialMimic@2F66FF0,
+       TryShowAdmobRewardedMimic@2F67658
+       → PrepareAmoNativeFullSession(route,"max-inter"/
+         "admob-reward",…,waitForClose=1)
+[CODE] AmoNativeFullSession.OnFullscreenDisplayed@2F61DA0
+       → AmoAdsBridge.ShowNativeFullWidthStyle
+[CODE] OnFullscreenHidden@2F62144 → bắt đầu đếm ngược X
+[CODE] Java DialogNativeFull*: setCancelable(false), immersive
+[RC v62] enable_amo_native_full_after_inter  = true (APK: false)
+         enable_amo_native_full_after_reward = true (APK: false)
+         ads_config.delay_show_close_native_full = 4000</div>
+    </div>
+  </div>
+</section>
+
+<!-- T5 -->
+<section class="trick" id="t5">
+  <div class="thead"><span class="tnum">Trick 5</span><h2>Nút đóng ẩn, trễ, đổi vị trí; khoá Back</h2><span class="chip hot">Rủi ro chính sách</span></div>
+  <div class="board n3">
+    <div class="step"><div class="ph" style="--i:0"><div class="sc"><div class="ad"><span class="adtag">Ad</span><div class="img"></div><div class="cta">CÀI ĐẶT</div></div><div class="x none">?</div><div class="lbl" style="top:110px">Surprise Dumpling: 0–3s alpha 0, không bấm được</div></div></div><div class="cap"><b>0–3 GIÂY</b>Không thấy nút đóng. Back không đóng được ad (MemeMix: <code>setCancelable(false)</code>).</div></div>
+    <div class="step"><div class="ph" style="--i:1"><div class="sc"><div class="ad"><span class="adtag">Ad</span><div class="img"></div><div class="cta">CÀI ĐẶT</div></div><div class="x l dim">✕</div><div class="lbl" style="top:110px">3–5s: alpha 0.2, vẫn chưa bấm được. Trái/phải ngẫu nhiên</div></div></div><div class="cap"><b>3–5 GIÂY</b>X hiện mờ để người dùng cố bấm, trượt sang lớp CTA (trick 2).</div></div>
+    <div class="step"><div class="ph" style="--i:2"><div class="sc"><div class="ad"><span class="adtag">Ad</span><div class="img"></div><div class="cta">CÀI ĐẶT</div></div><div class="x ring">✕</div><div class="lbl" style="top:110px">Steal Escape: vòng đếm ngược 3s (popup) / 5s (full)</div></div></div><div class="cap"><b>SAU ĐÓ</b>X mới bấm được. Steal Escape dùng vòng tròn đếm ngược, không khoá Back.</div></div>
+  </div>
+  <div class="cols">
+    <div>
+      <h3>So sánh</h3>
+      <ul>
+        <li><b>Surprise Dumpling:</b> ẩn 3s → mờ 0.2 (không bấm được) → 0.5 bấm được ở giây 5; vị trí ngẫu nhiên mỗi chuỗi; khi đã click ad thì X bị ẩn đi.</li>
+        <li><b>MemeMix:</b> X sau 4s (style 0) hoặc 3s (style 1–7); đếm ngược tạm dừng khi cửa sổ mất focus; icon X ngẫu nhiên 1/3 hình; khoá Back + ẩn thanh điều hướng.</li>
+        <li><b>Steal Escape:</b> vòng đếm ngược 3s cho native trong popup, 5s cho native full; cửa sổ không giữ focus nên Back vẫn hoạt động. Nhẹ nhất trong ba.</li>
+      </ul>
+      <div class="verdict"><b>Có nên học?</b> Đếm ngược có hiển thị như Steal Escape là chấp nhận được. Ẩn hẳn, làm mờ để dụ bấm, đổi vị trí ngẫu nhiên và khoá Back thì không.</div>
+    </div>
+    <div>
+      <h3>Bằng chứng</h3>
+<div class="ev">[CODE] SD InterClose2.onShow: alpha 0 (3s) → 0.2 → 0.5 clickable @5s
+       side = random ; onAdClicked → hide close
+[CODE] MemeMix DialogNativeFull*: countdown pause onWindowFocusChanged
+[RC]   MemeMix count_to_show_close_ads = 3 ; delay_show_close_native_full = 4000
+[CODE] Steal Escape ThunderAdmobNative: closeEnabled sau
+       nativeFullscreenCloseCountdownSeconds (5) / CloseCountdownSeconds (3)
+       window flags 0x1000128 (NOT_FOCUSABLE)</div>
+    </div>
+  </div>
+</section>
+
+<!-- T6 -->
+<section class="trick" id="t6">
+  <div class="thead"><span class="tnum">Trick 6</span><h2>Inter thay App-Open khi mở/quay lại app</h2><span class="chip warn">Rủi ro trung bình</span></div>
+  <div class="board n3">
+    <div class="step"><div class="ph" style="--i:0"><div class="sc home"><div class="launcher"><div></div><div></div><div class="me"></div><div></div><div></div><div></div></div><div class="tap" style="left:116px;top:62px"></div></div></div><div class="cap"><b>BƯỚC 1</b>Mở app, hoặc ra màn hình chính 1 giây rồi quay lại.</div></div>
+    <div class="step"><div class="ph" style="--i:1"><div class="sc"><div class="ad inter"><span class="adtag">Inter</span><div class="img"></div><div class="ln"></div><div class="cta" style="background:var(--accent)">PLAY</div></div><div class="x">✕</div><div class="lbl" style="top:120px">Interstitial (không phải App-Open), dùng unit inter riêng</div></div></div><div class="cap"><b>BƯỚC 2</b>Hiện interstitial thay vì App-Open. eCPM inter cao hơn AOA.</div></div>
+    <div class="step"><div class="ph" style="--i:2"><div class="sc home"><div class="launcher"><div></div><div></div><div class="me"></div><div></div><div></div><div></div></div><div class="lbl" style="top:180px">Ra ngoài lần nữa → lại có ad. Không có cooldown</div></div></div><div class="cap"><b>BƯỚC 3</b>Mỗi lần quay lại đều có thể bị ad, chỉ chặn khi đang có ad khác hiện.</div></div>
+  </div>
+  <div class="cols">
+    <div>
+      <h3>Cơ chế</h3>
+      <ul>
+        <li><b>MemeMix:</b> lúc mở app gọi <code>ShowInterNoVideo</code>; lúc quay lại gọi <code>ShowInterNoVideo2</code> (unit inter thứ hai). Đường resume chỉ kiểm tra có popup đang mở, có inter đang hiện và user có được xem ad không, không có cooldown.</li>
+        <li><b>Surprise Dumpling:</b> quay lại sau ≥1s là hiện native full (trick 1). Chỉ tạm tắt 180s sau khi mua IAP hoặc 20s sau màn đánh giá app.</li>
+        <li><b>Steal Escape:</b> dùng App-Open đúng chuẩn (cách inter ≥30s). <b>Tricky Brain:</b> App-Open đang tắt.</li>
+      </ul>
+      <div class="verdict"><b>Có nên học?</b> Dùng inter cho cold start có game làm, nhưng phải có cooldown khi resume. Không cooldown làm người dùng bị ad mỗi lần chuyển app, tăng tỉ lệ gỡ.</div>
+    </div>
+    <div>
+      <h3>Bằng chứng</h3>
+<div class="ev">[CODE] MemeMix TryShowStartupAd@2F64F30
+       if enable_inter_or_appopen → ShowInterNoVideo
+[CODE] TryShowResumeAd@2F65100
+       if enable_inter_or_appopen_resume → ShowInterNoVideo2
+[RC v62] enable_inter_or_appopen = true
+         enable_inter_or_appopen_resume = true (APK: false)
+[CODE] SD AppFocusWatcher.HandleFocusChange@2f37df8
+       minBackgroundSeconds = 1.0 [ASSET]</div>
+    </div>
+  </div>
+</section>
+
+<!-- T7 -->
+<section class="trick" id="t7">
+  <div class="thead"><span class="tnum">Trick 7</span><h2>Ad bắn khi bấm nút UI bình thường</h2><span class="chip warn">Rủi ro trung bình</span></div>
+  <div class="board n3">
+    <div class="step"><div class="ph" style="--i:0"><div class="sc"><div class="statusbar"></div><div class="hud"><span>Home</span><span>⚙</span></div><div class="tap" style="left:126px;top:26px"></div><div class="lbl" style="top:150px">MemeMix: bấm Settings</div></div></div><div class="cap"><b>VÍ DỤ 1</b>Bấm Settings hoặc về Home → inter + native chồng (trick 4).</div></div>
+    <div class="step"><div class="ph" style="--i:1"><div class="sc"><div class="dimbg"></div><div class="pop">Remove Ads<div class="nat" style="background:var(--ok);color:#fff;border:0">$2.99</div></div><div class="x" style="top:58px;right:16px">✕</div><div class="tap" style="left:126px;top:68px"></div><div class="lbl" style="top:200px">SD: đóng popup "Remove Ads" → ad</div></div></div><div class="cap"><b>VÍ DỤ 2</b>Từ chối mua gói bỏ quảng cáo thì bị show ad ngay.</div></div>
+    <div class="step"><div class="ph" style="--i:2"><div class="sc"><div class="statusbar"></div><div class="tile" style="left:30px;top:90px"></div><div class="tile" style="left:80px;top:130px"></div><div class="tabbar"><span>Home</span><span>Đảo</span><span>Phòng</span></div><div class="tap" style="left:75px;top:262px"></div><div class="lbl" style="top:180px">SD: tab, zoom, back… cách nhau ≥15s</div></div></div><div class="cap"><b>VÍ DỤ 3</b>Surprise Dumpling gắn ad vào hơn 10 thao tác điều hướng.</div></div>
+  </div>
+  <div class="cols">
+    <div>
+      <h3>Danh sách điểm gọi</h3>
+      <ul>
+        <li><b>MemeMix:</b> <code>UIMenuManager.OpenSettings</code>, <code>GameManager.ShowBackHomePopup</code> → inter, cooldown 30s.</li>
+        <li><b>Surprise Dumpling:</b> <code>AdsFlow.TryForcedInter</code> được gọi từ HomeTabBar, IslandInspect (chạm ra ngoài, zoom back, chọn ô), DreamRoomView, DecorWinPopUp.Back, GoHome, BackFromDecor, GoContinueFromJar, JarActionBar.Finish. Khoảng cách ≥ <code>inter_force_interval</code> = 15s.</li>
+        <li><b>Steal Escape:</b> inter khi xác nhận bán đồ (mức nhẹ, là điểm kết thúc một hành động).</li>
+      </ul>
+      <div class="verdict"><b>Có nên học?</b> Đặt inter ở điểm chuyển cảnh tự nhiên là bình thường. Ad khi bấm Settings hoặc khi từ chối IAP thì dễ bị xem là gây khó chịu và placement bất ngờ.</div>
+    </div>
+    <div>
+      <h3>Bằng chứng</h3>
+<div class="ev">[CODE] MemeMix OpenSettings@2FD6510, ShowBackHomePopup@2FBD7C8
+       → ShowInterMimic(allowNativeAfter=true)
+[CODE] SD AdsFlow.TryForcedInter@2f2da30 (10+ callers)
+[CODE] SD OfferRemoveAdsPopUp.OnclickCloseBtn@2f35c08
+       → lambda@2f35d64 → ShowInterOpen
+[RC v1] SD inter_force_interval = 15</div>
+    </div>
+  </div>
+</section>
+
+<!-- T8 -->
+<section class="trick" id="t8">
+  <div class="thead"><span class="tnum">Trick 8</span><h2>Native + banner cùng màn, native trong cửa sổ đè</h2><span class="chip warn">Rủi ro thấp–trung bình</span></div>
+  <div class="board n3">
+    <div class="step"><div class="ph" style="--i:0"><div class="sc"><div class="dimbg"></div><div class="pop">Offline earning<br><span style="font-size:14px">+1,240 💰</span><div style="display:flex;gap:4px"><span class="nat" style="flex:1;height:22px;background:var(--ok);color:#fff;border:0">x2 (Video)</span></div></div><div class="bn">Banner <i>Ad</i></div></div></div><div class="cap"><b>BƯỚC 1</b>Popup phần thưởng mở ra, banner vẫn ở đáy.</div></div>
+    <div class="step"><div class="ph" style="--i:1"><div class="sc"><div class="dimbg"></div><div class="pop">Offline earning<br><span style="font-size:14px">+1,240 💰</span></div><div class="ghost" style="left:8px;right:8px;bottom:28px;height:70px;background:var(--adbg);border-style:solid;border-color:var(--ad)"><span style="background:var(--ad);color:var(--adink)">Native (cửa sổ riêng)</span></div><div class="x ring" style="top:auto;bottom:74px;right:12px">✕</div><div class="bn">Banner <i>Ad</i></div></div></div><div class="cap"><b>BƯỚC 2</b>Native hiện trong cửa sổ đè lên game, ngay trên banner. X có vòng đếm 3s.</div></div>
+    <div class="step"><div class="ph" style="--i:2"><div class="sc"><div class="statusbar"></div><div class="tile" style="left:40px;top:120px"></div><div class="bn">Banner <i>Ad</i></div><div class="lbl" style="top:180px">Đóng popup → native ẩn (hideNativeWhenClose)</div></div></div><div class="cap"><b>BƯỚC 3</b>Mỗi popup là 1 impression native + banner chạy song song.</div></div>
+  </div>
+  <div class="cols">
+    <div>
+      <h3>Cơ chế (Steal Escape)</h3>
+      <ul>
+        <li>Plugin <code>ThunderAdmobNative</code> vẽ native trong một cửa sổ app-level riêng (type 1000), không giữ focus nên Back vẫn chạy.</li>
+        <li><code>showNativeAndBanner</code> mặc định true → popup native không tắt banner.</li>
+        <li>Popup có native: offline earning, nhận skin/item, egg x2, speed reward, pet index, settings, lucky chest. Gate: cách lúc cài ≥60s, giữa 2 native ≥15s.</li>
+      </ul>
+      <div class="verdict"><b>Có nên học?</b> Native trong popup là dạng phổ biến và hợp lệ nếu có nhãn Ad rõ và không đè lên nút bấm của popup. Chú ý native nằm sát nút "x2 Video" dễ gây click nhầm.</div>
+    </div>
+    <div>
+      <h3>Bằng chứng</h3>
+<div class="ev">[CODE] ThunderAdmobNative.addOverlayWindow
+       type 1000, flags 0x1000128
+[CODE] Thunder_NativeBridge.FinishShowRoutine@0x376a084
+       hide banner only if !showNativeAndBanner
+[ASSET] showNativeAndBanner = true, hideNativeWhenClose = true
+        native start 60s, between 15s
+[RC]  Firebase: NO_TEMPLATE → toàn bộ dùng mặc định APK</div>
+    </div>
+  </div>
+</section>
+
+<!-- T9 -->
+<section class="trick" id="t9">
+  <div class="thead"><span class="tnum">Trick 9</span><h2>Ad gắn vào vòng lặp gameplay</h2><span class="chip ok">Hợp lệ, nên tham khảo</span></div>
+  <div class="board n4">
+    <div class="step"><div class="ph" style="--i:0"><div class="sc"><div class="statusbar"></div><div class="tread"></div><div class="hero"></div><div class="lbl" style="top:200px">Steal Escape: đứng trên máy chạy bộ để tăng tốc</div></div></div><div class="cap"><b>A · BƯỚC 1</b>Người chơi cày tốc độ trên máy chạy bộ.</div></div>
+    <div class="step"><div class="ph" style="--i:1"><div class="sc"><div class="statusbar"></div><div class="tread"></div><div class="hero"></div><div class="big"><span class="n">3</span><span class="t">Quảng cáo sau…</span></div></div></div><div class="cap"><b>A · BƯỚC 2</b>Đếm ngược 3 giây báo trước, rồi show inter. Kiểm tra lại mỗi 5s, thực tế ~40s một lần.</div></div>
+    <div class="step"><div class="ph" style="--i:2"><div class="sc"><div class="statusbar"></div><div class="hud"><span>Level 8</span><span>⏸</span></div><div class="tile" style="left:36px;top:120px"></div><div class="tile" style="left:86px;top:170px"></div><div class="lbl" style="top:220px">Tricky Brain: 25s không chạm màn hình</div></div></div><div class="cap"><b>B · BƯỚC 1</b>Người chơi đứng im suy nghĩ quá 25 giây.</div></div>
+    <div class="step"><div class="ph" style="--i:3"><div class="sc"><div class="dimbg"></div><div class="pop">Ad break<br><span style="font-size:22px;font-weight:800">3</span>Quảng cáo sắp hiện</div><div class="bn">Banner</div></div></div><div class="cap"><b>B · BƯỚC 2</b>Popup đếm ngược rồi show inter, vẫn qua mọi gate inter (level, session, cooldown).</div></div>
+  </div>
+  <div class="cols">
+    <div>
+      <h3>Cơ chế</h3>
+      <ul>
+        <li><b>Steal Escape:</b> <code>Treadmill.TryStartAdsCountdown</code> → <code>GuiGameplay.ShowAdsTreadmill</code> (placement <code>treadmill_run</code>). Đây là nguồn inter chính của game. Gate chung: xong tutorial, cách lúc cài ≥60s, cách inter/rewarded trước ≥40s.</li>
+        <li><b>Tricky Brain:</b> <code>GameSessionManager.Update</code> đếm thời gian không chạm (<code>config_time_input</code>=25s) → popup ad break. RC: <code>ads_break_cooldown_time</code>=5 (bản 0.3.0: 90).</li>
+        <li><b>MemeMix:</b> inter giữa trận sau round 1 (trận 3 round) hoặc round 2 (trận 5 round), có màn "PopupRelax" trước inter kết quả.</li>
+      </ul>
+      <div class="verdict"><b>Có nên học?</b> Có. Đếm ngược báo trước + gắn vào khoảng nghỉ tự nhiên của gameplay giữ trải nghiệm chấp nhận được mà vẫn tăng số inter mỗi phiên. Tricky Brain còn tách ~60% lượt cài không có inter để thử nghiệm (chia ngẫu nhiên).</div>
+    </div>
+    <div>
+      <h3>Bằng chứng</h3>
+<div class="ev">[CODE] Steal Escape Treadmill::TryStartAdsCountdown
+       → GuiGameplay::ShowAdsTreadmill (3s countdown)
+[ASSET] inter start 60s / between 40s
+[CODE] Tricky Brain GameSessionManager.Update
+[RC v147] interstitial_ad_break_enable = true
+          ads_break_cooldown_time = 5
+[CODE] MemeMix GetTeaBreakAfterRound@2FB9580
+[RC v62] tea_break_3/5_round_ads_mode = 2</div>
+    </div>
+  </div>
+</section>
+
+<!-- SEGMENT -->
+<section class="trick" id="seg">
+  <div class="thead"><span class="tnum">Segment</span><h2>Segment user theo mạng quảng cáo</h2><span class="chip">Chỉ Tricky Brain</span></div>
+  <p>Chỉ Tricky Brain đọc nguồn user để quyết định cách show ad, và chỉ dùng cho trick 3. Ba game còn lại nhận dữ liệu attribution (AppsFlyer/Adjust) rồi bỏ đi, không set user property; quét RC giả làm FB, TikTok, Google, organic đều trả cùng một kết quả.</p>
+  <div class="flow">
+    <div class="node"><span class="h">1. AppsFlyer conversion data</span><span>Game lưu <code>af_status</code> và <code>media_source</code>. Chưa có dữ liệu thì coi là <code>Organic</code>.</span></div>
+    <div class="node no"><span class="h">2. af_status == "Organic"?</span><span>So khớp chính xác, phân biệt hoa thường. Organic → <b>không bao giờ</b> bật boost.</span></div>
+    <div class="node"><span class="h">3. media_source chứa một mục trong list?</span><span>Viết thường, so kiểu "chứa chuỗi" với từng mục của RC <code>BB.source</code>. List rỗng = mọi user non-organic.</span></div>
+    <div class="node yes"><span class="h">4. Bật boost</span><span>Kèm điều kiện mạng đang hiển thị ad, cooldown, level (trick 3).</span></div>
+  </div>
+  <div class="cols">
+    <div>
+      <h3 style="color:var(--hot)">Bị boost (cướp click)</h3>
+      <div class="srcs"><span class="chip hot">googleadwords_int · Google/YouTube</span><span class="chip hot">tiktokglobal_int · TikTok</span></div>
+    </div>
+    <div>
+      <h3 style="color:var(--ok)">Không bị boost</h3>
+      <div class="srcs"><span class="chip ok">Facebook Ads · Meta</span><span class="chip ok">Organic</span></div>
+    </div>
+  </div>
+  <div class="verdict"><b>Đọc thế nào:</b> user từ Meta được để sạch, có thể để tín hiệu tối ưu trên Meta không bị nhiễu bởi click giả <code>[HYP]</code>. User TikTok bị boost khi AppsFlyer ghi nguồn là <code>tiktokglobal_int</code>. Ngoài boost, user mọi nguồn nhận inter, rewarded, banner, MREC như nhau. RC cũng đã có sẵn key "show inter thay App-Open khi user quay lại sau click boost" (<code>ShowInterReplaceAOAResumeForClickBoost</code>) nhưng bản 0.3.9 chưa đọc.</div>
+<div class="ev">[CODE] organic check @175DDC4  af_status == "Organic" (default "Organic")
+[CODE] IsUserFromMediaSourceListAllowed@16D892C
+       organic → false ; list rỗng → true ;
+       mediaSource.ToLower().Contains(item.Trim().ToLower())
+[RC v147] 34 probe: media_source/campaign/geo/tenure → giá trị giống nhau
+          (server không chia theo nguồn; việc chia nằm ở client)</div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:14px">
+  <h2>Có code nhưng đang tắt</h2>
+  <p style="color:var(--muted)">Những thứ này có thể bật bằng RC hoặc ở bản cập nhật sau, nên theo dõi.</p>
+  <div class="dormant">
+    <div><span class="g">MemeMix · native đứng một mình thay inter</span><span>Nút Play hoặc tea-break mode 1, unit <code>ads_native_full_alone_id</code>. RC đang tắt.</span></div>
+    <div><span class="g">MemeMix · nút X "fakeClick"</span><span>Bấm X gọi click CTA rồi mới đóng. Chỉ qua <code>ShowAmoNativeCollapse1/2</code>, không ai gọi.</span></div>
+    <div><span class="g">Steal Escape · native full giả inter + chồng 2 native</span><span>Có hàm vẽ, không có lời gọi; slot thứ hai không bao giờ load.</span></div>
+    <div><span class="g">Surprise Dumpling · auto-inter 60s</span><span><code>AutoInterTimer</code> có toast "CoffeeTime" 4s báo trước; bị tắt trong Awake.</span></div>
+    <div><span class="g">Tricky Brain · inter thay AOA sau click boost</span><span>Config đã có trên RC v147, client 0.3.9 chưa đọc.</span></div>
+  </div>
+</section>
+
+<footer>
+  <span class="eyebrow">Chưa thấy được từ client</span>
+  <p>Native của MemeMix có bị tính impression khi còn bị inter che không; mạng quảng cáo có phát hiện hoặc thu hồi doanh thu từ các click này không; tỉ lệ user theo nguồn; floor và waterfall trên mediation; Tricky Brain có thực sự bắn TouchDelegate ra ngoài khung banner không. Cần chạy thử trên thiết bị kèm bắt traffic để xác nhận.</p>
+  <p>Tool và dữ liệu thô: <code>C:\Users\DPC-000176\adops-tools\{mememix, surprisedumpling, trickybrain, stealescape}\</code>.</p>
+</footer>
+</div>
+
+</body>
+</html>
